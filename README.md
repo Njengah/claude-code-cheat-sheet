@@ -156,7 +156,7 @@ claude -p --max-turns 3 "query"
 claude --verbose
 
 # Session cost and duration
-/cos                      # Show total cost and duration
+/cost                     # Show total cost and duration
 ```
 
 ## 🟠 Level 3: Advanced Commands
@@ -193,7 +193,7 @@ claude --dangerously-skip-permissions
 
 ```bash
 /doctor                   # Check installation health
-/cos                      # Show cost and duration of current session
+/cost                     # Show cost and duration of current session
 /ide                      # Manage IDE integrations
 ```
 
@@ -402,7 +402,7 @@ claude -p --max-turns 1 "quick analysis"      # Single turn for efficiency
 claude -p --compact-mode "analyze with minimal context"
 
 # Resource monitoring
-/cos                       # Check current session costs
+/cost                      # Check current session costs
 /doctor --performance      # Performance diagnostics
 ```
 
@@ -509,7 +509,7 @@ claude --compliance-mode "analyze for security compliance"
 | `/clear` | Clear conversation history |
 | `/config` | Open config panel |
 | `/doctor` | Check installation health |
-| `/cos` | Show cost and duration |
+| `/cost`| Show cost and duration |
 | `/ide` | Manage IDE integrations |
 | `/compact [instructions]` | Summarize conversation |
 | `/mcp` | Access MCP functionality |
