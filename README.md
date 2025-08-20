@@ -402,7 +402,7 @@ claude -p --max-turns 1 "quick analysis"      # Single turn for efficiency
 claude -p --compact-mode "analyze with minimal context"
 
 # Resource monitoring
-/cos                       # Check current session costs
+/cost                      # Check current session costs
 /doctor --performance      # Performance diagnostics
 ```
 
