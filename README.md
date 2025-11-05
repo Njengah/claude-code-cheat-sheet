@@ -156,7 +156,7 @@ claude -p --max-turns 3 "query"
 claude --verbose
 
 # Session cost and duration
-/cos                      # Show total cost and duration
+/cost                      # Show total cost and duration
 ```
 
 ## 🟠 Level 3: Advanced Commands
