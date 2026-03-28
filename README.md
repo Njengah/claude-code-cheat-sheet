@@ -666,4 +666,8 @@ For more Claude Code resources, visit the official Anthropic documentation at
 - [Anthropic API Documentation](https://docs.anthropic.com)
 - [MCP Documentation](https://docs.anthropic.com/en/docs/build-with-claude/mcp)
 
+### Community Tools
+
+- [claude-dash](https://github.com/krabat-l/claude-dash) - Real-time statusline plugin showing context health, quota, cost, cache efficiency, and tool activity
+
 **Last updated**: July 2025
