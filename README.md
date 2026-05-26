@@ -153,15 +153,18 @@ claude install 2.1.118
 ```bash
 /help                     # Show help and available commands
 /exit                     # Exit the REPL
-/clear                    # Clear conversation history
-/config                   # Open config panel
+/clear [name]             # Start a fresh conversation; previous session stays resumable
+/compact [instructions]   # Summarize current history to free context
+/context                  # Visualize context usage
+/config                   # Open settings panel
+/status                   # Show version, model, account, and connectivity
 /doctor                   # Check Claude Code installation health
 ```
 
-### Basic File Operations
+### Basic File Operations and Print Mode
 
 ```bash
-# Print mode (SDK) - execute and exit
+# Print mode - execute a prompt and exit
 claude -p "explain this function"
 
 # Process piped content
@@ -170,35 +173,58 @@ cat logs.txt | claude -p "explain"
 # Continue most recent conversation
 claude -c
 
-# Continue via SDK
+# Continue in print mode
 claude -c -p "Check for type errors"
 ```
 
 ### Session Management
 
 ```bash
-# Resume session by ID
-claude -r "abc123" "Finish this PR"
-
-# Resume with flag
-claude --resume abc123 "query"
-
-# Continue session
+# Continue the most recent session in this directory
 claude --continue
+
+# Resume by session ID or name
+claude --resume abc123 "query"
+claude --resume auth-refactor
+
+# Open the session picker
+claude --resume
+
+# Name a session at startup
+claude -n auth-refactor
+
+# Rename inside an active session
+/rename auth-refactor
+
+# Branch the current conversation
+/branch try-streaming-approach
+
+# Resume a session linked to a pull request
+claude --from-pr 123
 ```
 
 ### Keyboard Shortcuts
 
 ```bash
-Ctrl+C                    # Cancel current operation
+Ctrl+C                    # Interrupt; if idle, clear input, then exit on second press
 Ctrl+D                    # Exit Claude Code
-Tab                       # Auto-complete
-Up/Down                   # Navigate command history
+Ctrl+O                    # Toggle transcript viewer
+Ctrl+R                    # Reverse-search command history
+Ctrl+T                    # Toggle task list
+Esc                       # Interrupt current response or tool call
+Esc Esc                   # Clear draft, or open rewind menu when input is empty
+Shift+Tab                 # Cycle permission modes
+Alt+P / Option+P          # Switch model
+Alt+T / Option+T          # Toggle extended thinking
+Alt+O / Option+O          # Toggle fast mode
+@                         # File path mention autocomplete
+!                         # Shell mode
+Up/Down                   # Move in multiline input or navigate command history
 ```
 
 ## 🟡 Level 2: Intermediate Commands
 
-Configuration and model management
+Configuration, model, and session management
 
 ### Model Configuration
 
@@ -206,7 +232,14 @@ Configuration and model management
 # Switch models
 claude --model sonnet                    # Use Sonnet model
 claude --model opus                      # Use Opus model
-claude --model claude-sonnet-4-20250514  # Use specific model version
+claude --model claude-sonnet-4-6         # Use a specific model
+
+# Set reasoning effort for the session
+claude --effort high
+/effort high
+
+# Change model inside a session
+/model sonnet
 ```
 
 ### Directory Management
@@ -222,26 +255,28 @@ claude --add-dir /path/to/project
 ### Output Formatting
 
 ```bash
-# Different output formats
+# Output formats for print mode
 claude -p "query" --output-format json
 claude -p "query" --output-format text
 claude -p "query" --output-format stream-json
 
-# Input formatting
+# Input formatting for print mode
 claude -p --input-format stream-json
 ```
 
 ### Session Control
 
 ```bash
-# Limit conversation turns
+# Limit agentic turns in print mode
 claude -p --max-turns 3 "query"
 
 # Verbose logging
 claude --verbose
 
-# Session cost and duration
-/cos                      # Show total cost and duration
+# Session cost, limits, and activity stats
+/usage
+/cost                     # Alias for /usage
+/stats                    # Alias for /usage
 ```
 
 ## 🟠 Level 3: Advanced Commands
@@ -278,7 +313,7 @@ claude --dangerously-skip-permissions
 
 ```bash
 /doctor                   # Check installation health
-/cos                      # Show cost and duration of current session
+/usage                    # Show session cost, limits, and activity stats
 /ide                      # Manage IDE integrations
 ```
 
@@ -364,7 +399,7 @@ Expert automation and custom workflows
 
 ```bash
 # Complex model and tool configuration
-claude --model claude-sonnet-4-20250514 \
+claude --model claude-sonnet-4-6 \
        --add-dir ../apps ../lib ../tools \
        --allowedTools "Bash(git:*)" "Write" "Read" \
        --verbose \
@@ -487,7 +522,7 @@ claude -p --max-turns 1 "quick analysis"      # Single turn for efficiency
 claude -p --compact-mode "analyze with minimal context"
 
 # Resource monitoring
-/cos                       # Check current session costs
+/usage                     # Check current session costs, limits, and activity stats
 /doctor --performance      # Performance diagnostics
 ```
 
@@ -495,7 +530,7 @@ claude -p --compact-mode "analyze with minimal context"
 
 ```bash
 # Efficient session reuse
-claude -c "continue previous analysis"         # Reuse existing context
+claude -c -p "continue previous analysis"      # Reuse existing context in print mode
 claude --cache-results "repetitive task"      # Cache common operations
 
 # Parallel processing
@@ -563,9 +598,13 @@ claude --compliance-mode "analyze for security compliance"
 |---------|-------------|---------|
 | `claude` | Start interactive REPL | `claude` |
 | `claude "query"` | Start REPL with prompt | `claude "explain this project"` |
-| `claude -p "query"` | Print mode, execute and exit | `claude -p "explain function"` |
-| `claude -c` | Continue recent conversation | `claude -c` |
-| `claude -r "id" "query"` | Resume session by ID | `claude -r "abc123" "finish PR"` |
+| `claude -p "query"` | Print mode: run a prompt and exit | `claude -p "explain function"` |
+| `cat file \| claude -p "query"` | Process piped content | `cat logs.txt \| claude -p "explain"` |
+| `claude -c` / `claude --continue` | Continue the most recent conversation in the current directory | `claude --continue` |
+| `claude -r "<session>"` / `claude --resume <session>` | Resume by session ID or name | `claude --resume auth-refactor` |
+| `claude --resume` | Open the session picker | `claude --resume` |
+| `claude -n <name>` | Name a session at startup | `claude -n auth-refactor` |
+| `claude --from-pr <PR>` | Resume the session linked to a pull request | `claude --from-pr 123` |
 | `claude auth login` | Sign in to Claude Code | `claude auth login` |
 | `claude auth status` | Check authentication status | `claude auth status` |
 | `claude auth logout` | Sign out | `claude auth logout` |
@@ -577,16 +616,19 @@ claude --compliance-mode "analyze for security compliance"
 
 | Flag | Description | Example |
 |------|-------------|---------|
-| `--model` | Specify model | `--model sonnet` |
-| `--add-dir` | Add working directories | `--add-dir ../apps ../lib` |
+| `--model` | Set the model for this session | `--model sonnet` |
+| `--effort` | Set reasoning effort for this session | `--effort high` |
+| `--add-dir` | Add working directories for file access | `--add-dir ../apps ../lib` |
 | `--allowedTools` | Allow tools without prompting | `--allowedTools "Bash(git:*)"` |
 | `--disallowedTools` | Disallow specific tools | `--disallowedTools "Bash(rm:*)"` |
 | `--output-format` | Set output format | `--output-format json` |
 | `--input-format` | Set input format | `--input-format stream-json` |
-| `--max-turns` | Limit conversation turns | `--max-turns 3` |
+| `--max-turns` | Limit agentic turns in print mode | `--max-turns 3` |
 | `--verbose` | Enable verbose logging | `--verbose` |
 | `--continue` | Continue session | `--continue` |
 | `--resume` | Resume session | `--resume abc123` |
+| `--from-pr` | Resume a session linked to a pull request | `--from-pr 123` |
+| `--fork-session` | Resume into a copied session branch | `--continue --fork-session` |
 | `--dangerously-skip-permissions` | Skip all permission prompts | `--dangerously-skip-permissions` |
 
 ### Slash Commands
@@ -594,23 +636,44 @@ claude --compliance-mode "analyze for security compliance"
 | Command | Description |
 |---------|-------------|
 | `/help` | Show help and available commands |
-| `/exit` | Exit the REPL |
-| `/clear` | Clear conversation history |
-| `/config` | Open config panel |
+| `/exit` | Exit the CLI; in an attached background session, detach |
+| `/clear [name]` | Start a new conversation; previous session remains resumable |
+| `/compact [instructions]` | Summarize the current conversation to free context |
+| `/context [all]` | Show current context usage |
+| `/config` | Open settings panel |
+| `/status` | Show version, model, account, and connectivity |
 | `/doctor` | Check installation health |
-| `/cos` | Show cost and duration |
+| `/usage` | Show session cost, limits, and activity stats |
+| `/cost` | Alias for `/usage` |
+| `/stats` | Alias for `/usage` |
+| `/model [model]` | Change model inside the session |
+| `/effort [level|auto]` | Adjust reasoning effort |
+| `/resume [session]` | Resume another conversation |
+| `/rename [name]` | Rename the current session |
+| `/branch [name]` | Fork the conversation from the current point |
+| `/export [filename]` | Export the current conversation |
+| `/diff` | Open an interactive diff viewer |
 | `/ide` | Manage IDE integrations |
-| `/compact [instructions]` | Summarize conversation |
 | `/mcp` | Access MCP functionality |
 
 ### Keyboard Shortcut
 
 | Shortcut | Action |
 |----------|--------|
-| `Ctrl+C` | Cancel current operation |
+| `Ctrl+C` | Interrupt; if idle, clear input, then exit on second press |
 | `Ctrl+D` | Exit Claude Code |
-| `Tab` | Auto-complete |
-| `Up/Down` | Navigate command history |
+| `Ctrl+O` | Toggle transcript viewer |
+| `Ctrl+R` | Reverse-search command history |
+| `Ctrl+T` | Toggle task list |
+| `Esc` | Interrupt current response or tool call |
+| `Esc Esc` | Clear draft, or open rewind menu when input is empty |
+| `Shift+Tab` | Cycle permission modes |
+| `Alt+P` / `Option+P` | Switch model |
+| `Alt+T` / `Option+T` | Toggle extended thinking |
+| `Alt+O` / `Option+O` | Toggle fast mode |
+| `@` | File path mention autocomplete |
+| `!` | Shell mode |
+| `Up/Down` | Move in multiline input or navigate command history |
 
 ## Best Practices
 
@@ -766,6 +829,9 @@ For more Claude Code resources, visit the official Anthropic documentation at
 - [Official Claude Code Documentation](https://code.claude.com/docs/en/overview)
 - [Claude Code Setup Guide](https://code.claude.com/docs/en/setup)
 - [Claude Code CLI Reference](https://code.claude.com/docs/en/cli-reference)
+- [Claude Code Commands Reference](https://code.claude.com/docs/en/commands)
+- [Claude Code Interactive Mode](https://code.claude.com/docs/en/interactive-mode)
+- [Claude Code Session Management](https://code.claude.com/docs/en/sessions)
 - [Claude Code GitHub Repository](https://github.com/anthropics/claude-code)
 - [Anthropic API Documentation](https://docs.anthropic.com)
 - [MCP Documentation](https://code.claude.com/docs/en/mcp)
