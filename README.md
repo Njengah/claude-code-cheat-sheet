@@ -283,6 +283,90 @@ claude --verbose
 
 Tools and permission management
 
+### Safe Repo Workflow
+
+Use Claude Code with the same care you would use for any tool that can edit files and run commands in a repository.
+
+1. Start sensitive work in `default` or `plan` mode.
+2. Create a branch before allowing edits.
+3. Use `/diff` and `git diff` to review changes before committing or merging.
+4. Keep `.env`, secrets, `.git`, and project configuration paths protected with deny rules.
+5. Use `bypassPermissions` or `--dangerously-skip-permissions` only inside an isolated container, VM, or disposable environment.
+
+```bash
+# Explore first; Claude can read files and run read-only commands, but not edit source files
+claude --permission-mode plan
+
+# Standard mode: Claude asks before writes, shell commands, and network requests
+claude --permission-mode default
+
+# Create a reviewable branch before edits
+git switch -c feature/safe-change
+
+# Review edits before commit or merge
+/diff
+git diff
+```
+
+### Permission Modes
+
+| Mode | What it does | Best for |
+|------|--------------|----------|
+| `default` | Read-only actions run without prompting; writes, shell commands, and network requests ask first | Getting started and sensitive repos |
+| `acceptEdits` | Auto-accepts file edits and common filesystem commands in allowed directories | Iterating on code you still plan to review |
+| `plan` | Allows exploration with reads and read-only shell commands, but blocks source edits | Understanding a codebase before changing it |
+| `auto` | Runs actions with background safety checks; research preview | Longer trusted tasks where prompts are noisy |
+| `dontAsk` | Auto-denies tools unless pre-approved by permission rules | Locked-down scripts and CI-style usage |
+| `bypassPermissions` | Skips permission prompts and permission rules | Isolated containers or VMs only |
+
+Switch modes with `Shift+Tab` in the CLI, or set one explicitly:
+
+```bash
+claude --permission-mode plan
+claude --permission-mode acceptEdits
+claude -p --permission-mode dontAsk "run the approved checks"
+```
+
+### Permission Rules
+
+Permission rules are grouped as `allow`, `ask`, and `deny`. Deny rules are evaluated before ask and allow rules, so use deny rules for hard boundaries.
+
+Rules use either `Tool` or `Tool(specifier)`:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run test)",
+      "Bash(git diff *)",
+      "WebFetch(domain:code.claude.com)"
+    ],
+    "ask": [
+      "Edit"
+    ],
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/*secret*)",
+      "Edit(.git/**)",
+      "Bash(git push *)",
+      "Bash(rm -rf *)"
+    ]
+  }
+}
+```
+
+Common rule patterns:
+
+| Rule | Meaning |
+|------|---------|
+| `Bash` | Match every Bash command |
+| `Bash(npm run build)` | Match one exact command |
+| `Bash(npm run *)` | Match commands with a wildcard |
+| `Read(**/.env)` | Match any `.env` under the current project |
+| `Edit(.git/**)` | Block edits to repository internals |
+| `WebFetch(domain:example.com)` | Limit web fetches to a domain |
+| `Agent(Explore)` | Match a specific subagent |
+
 ### Tool Management
 
 ```bash
@@ -295,8 +379,24 @@ claude --disallowedTools "Bash(rm:*)" "Bash(sudo:*)"
 # Prompt for specific tool permission
 claude -p --permission-prompt-tool mcp_auth_tool "query"
 
-# Skip all permission prompts (dangerous)
+# Skip all permission prompts; use only in an isolated environment
 claude --dangerously-skip-permissions
+```
+
+### Sensitive Files and Protected Paths
+
+Treat permission prompts as review gates, not as a substitute for repository hygiene.
+
+- Do not allow reads of `.env`, credentials, private keys, production config, or secret stores unless the task truly requires it.
+- Deny writes to `.git/**`, `.claude/**`, editor config, hook directories, deployment config, and release automation unless the change is intentional.
+- Prefer specific allow rules like `Bash(npm run test)` over broad rules like `Bash`.
+- Permission rules guide Claude Code tools; scripts run through Bash, Node, Python, or other subprocesses may read files themselves. Use sandboxing or a container when you need OS-level isolation.
+
+For more autonomous sessions, combine permissions with sandboxing:
+
+```bash
+/sandbox
+claude --permission-mode auto
 ```
 
 ### Slash Commands - Session Management
@@ -621,6 +721,7 @@ claude --compliance-mode "analyze for security compliance"
 | `--add-dir` | Add working directories for file access | `--add-dir ../apps ../lib` |
 | `--allowedTools` | Allow tools without prompting | `--allowedTools "Bash(git:*)"` |
 | `--disallowedTools` | Disallow specific tools | `--disallowedTools "Bash(rm:*)"` |
+| `--permission-mode` | Set the session permission mode | `--permission-mode plan` |
 | `--output-format` | Set output format | `--output-format json` |
 | `--input-format` | Set input format | `--input-format stream-json` |
 | `--max-turns` | Limit agentic turns in print mode | `--max-turns 3` |
@@ -629,7 +730,7 @@ claude --compliance-mode "analyze for security compliance"
 | `--resume` | Resume session | `--resume abc123` |
 | `--from-pr` | Resume a session linked to a pull request | `--from-pr 123` |
 | `--fork-session` | Resume into a copied session branch | `--continue --fork-session` |
-| `--dangerously-skip-permissions` | Skip all permission prompts | `--dangerously-skip-permissions` |
+| `--dangerously-skip-permissions` | Skip permission prompts; isolated environments only | `--dangerously-skip-permissions` |
 
 ### Slash Commands
 
@@ -641,6 +742,7 @@ claude --compliance-mode "analyze for security compliance"
 | `/compact [instructions]` | Summarize the current conversation to free context |
 | `/context [all]` | Show current context usage |
 | `/config` | Open settings panel |
+| `/permissions` | View and manage permission rules |
 | `/status` | Show version, model, account, and connectivity |
 | `/doctor` | Check installation health |
 | `/usage` | Show session cost, limits, and activity stats |
@@ -686,9 +788,10 @@ claude --compliance-mode "analyze for security compliance"
 
 ### Security Tips
 
-- Avoid `--dangerously-skip-permissions`
-- Use `--disallowedTools` for dangerous commands
-- Review tool permissions regularly
+- Start sensitive repo work in `plan` or `default` mode
+- Avoid `--dangerously-skip-permissions` outside isolated containers or VMs
+- Use deny rules for `.env`, secrets, `.git`, deploys, and destructive commands
+- Review `/permissions` regularly
 - Keep Claude Code updated
 
 ### Workflow Tips
@@ -788,13 +891,13 @@ claude -p --max-turns 3 "focused query"
 
 ```bash
 # Check current permissions
-claude --list-permissions
+/permissions
 
-# Reset permissions
-claude --reset-permissions
-
-# Configure specific permissions
+# Configure specific permissions at startup
 claude --allowedTools "Bash(git:*)" --disallowedTools "Bash(rm:*)"
+
+# Start in a stricter mode for investigation
+claude --permission-mode plan
 ```
 
 ## 🤝 Contributing
