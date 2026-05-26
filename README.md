@@ -8,19 +8,49 @@ After testing Claude Code extensively, I've developed this comprehensive cheat s
 
 ## Quick Start
 
+Install Claude Code, sign in, and start it from the root of the project you want Claude to work on.
+
+### macOS, Linux, or WSL
+
 ```bash
-
-# Windows users
-wsl
-
-# Install Claude Code
-npm install -g @anthropic-ai/claude-code
-
-# Launch interactive REPL
+curl -fsSL https://claude.ai/install.sh | bash
+claude auth login
 claude
+```
 
-# Check version
+### Windows PowerShell
+
+```powershell
+irm https://claude.ai/install.ps1 | iex
+claude auth login
+claude
+```
+
+### Windows CMD
+
+```cmd
+curl -fsSL https://claude.ai/install.cmd -o install.cmd && install.cmd && del install.cmd
+claude auth login
+claude
+```
+
+### Package Managers
+
+```bash
+# macOS
+brew install --cask claude-code
+```
+
+```powershell
+# Windows
+winget install Anthropic.ClaudeCode
+```
+
+Check your installation:
+
+```bash
 claude --version
+claude auth status
 ```
 
 ## 📚 Table of Contents
@@ -46,10 +76,60 @@ Essential commands to get started
 
 ### Installation & Getting Started
 
-```bash
-# Install Claude Code
-curl -sL https://install.anthropic.com | sh
+Claude Code requires an account with Claude Code access. After installing, sign in with `claude auth login` or start `claude` and follow the browser prompts.
 
+#### Native Install
+
+```bash
+# Recommended native install for macOS, Linux, or WSL
+curl -fsSL https://claude.ai/install.sh | bash
+```
+
+```powershell
+# Windows PowerShell
+irm https://claude.ai/install.ps1 | iex
+```
+
+```cmd
+# Windows CMD
+curl -fsSL https://claude.ai/install.cmd -o install.cmd && install.cmd && del install.cmd
+```
+
+#### Package Managers
+
+```bash
+# macOS Homebrew
+brew install --cask claude-code
+```
+
+```powershell
+# Windows WinGet
+winget install Anthropic.ClaudeCode
+```
+
+#### npm
+
+```bash
+# Deprecated npm fallback
+npm install -g @anthropic-ai/claude-code
+```
+
+#### Authentication
+
+```bash
+# Sign in
+claude auth login
+
+# Check sign-in status
+claude auth status
+
+# Sign out
+claude auth logout
+```
+
+#### First Run and Updates
+
+```bash
 # Start interactive REPL
 claude
 
@@ -61,6 +141,11 @@ claude --version
 
 # Update to latest version
 claude update
+
+# Install or reinstall a specific native version
+claude install stable
+claude install latest
+claude install 2.1.118
 ```
 
 ### Basic Navigation
@@ -481,7 +566,11 @@ claude --compliance-mode "analyze for security compliance"
 | `claude -p "query"` | Print mode, execute and exit | `claude -p "explain function"` |
 | `claude -c` | Continue recent conversation | `claude -c` |
 | `claude -r "id" "query"` | Resume session by ID | `claude -r "abc123" "finish PR"` |
+| `claude auth login` | Sign in to Claude Code | `claude auth login` |
+| `claude auth status` | Check authentication status | `claude auth status` |
+| `claude auth logout` | Sign out | `claude auth logout` |
 | `claude update` | Update to latest version | `claude update` |
+| `claude install [version]` | Install or reinstall the native binary | `claude install stable` |
 | `claude mcp` | Configure MCP servers | `claude mcp` |
 
 ### CLI Flags
@@ -599,9 +688,22 @@ claude --compliance-mode "analyze for security compliance"
 ```bash
 # Check installation
 claude --version
-claude /doctor
+claude auth status
+claude doctor
 
-# Reinstall if needed
+# Reinstall native Claude Code
+claude install stable
+
+# Native install for macOS, Linux, or WSL
+curl -fsSL https://claude.ai/install.sh | bash
+
+# Windows PowerShell
+irm https://claude.ai/install.ps1 | iex
+
+# Windows CMD
+curl -fsSL https://claude.ai/install.cmd -o install.cmd && install.cmd && del install.cmd
+
+# If you installed through npm previously
 npm uninstall -g @anthropic-ai/claude-code
 npm install -g @anthropic-ai/claude-code
 ```
@@ -661,9 +763,11 @@ If this cheat sheet helped you master Claude Code, please:
 
 For more Claude Code resources, visit the official Anthropic documentation at
 
-- [Official Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code)
-- [Claude Code GitHub Repository](https://github.com/anthropic-ai/claude-code)
+- [Official Claude Code Documentation](https://code.claude.com/docs/en/overview)
+- [Claude Code Setup Guide](https://code.claude.com/docs/en/setup)
+- [Claude Code CLI Reference](https://code.claude.com/docs/en/cli-reference)
+- [Claude Code GitHub Repository](https://github.com/anthropics/claude-code)
 - [Anthropic API Documentation](https://docs.anthropic.com)
-- [MCP Documentation](https://docs.anthropic.com/en/docs/build-with-claude/mcp)
+- [MCP Documentation](https://code.claude.com/docs/en/mcp)
 
-**Last updated**: July 2025
+**Last verified against official Claude Code docs**: May 26, 2026
