@@ -252,6 +252,80 @@ claude --add-dir ../apps ../lib
 claude --add-dir /path/to/project
 ```
 
+### Project Context, Memory, and Settings
+
+Claude Code reads project instructions, rules, settings, skills, subagents, and command definitions from the current repository and from your user-level `~/.claude` directory. Commit shared project guidance to the repo; keep personal preferences in user or local settings.
+
+Common files:
+
+| Path | Purpose | Commit? |
+|------|---------|---------|
+| `CLAUDE.md` | Main project instructions and conventions | Yes |
+| `.claude/CLAUDE.md` | Additional project instructions under the `.claude` directory | Yes |
+| `CLAUDE.local.md` | Private project-specific preferences | No |
+| `.claude/rules/*.md` | Modular rules that can apply globally or by path | Usually |
+| `.claude/settings.json` | Shared project settings, permissions, hooks, plugins, and environment | Yes, after review |
+| `.claude/settings.local.json` | Local overrides and experiments | No |
+| `~/.claude/settings.json` | Personal settings across projects | No |
+
+If your repo already uses `AGENTS.md`, import it from `CLAUDE.md` instead of duplicating instructions:
+
+```markdown
+@AGENTS.md
+
+## Claude Code
+
+Use plan mode before changing deployment files.
+```
+
+For larger projects, split instructions into `.claude/rules/`. Rules without path frontmatter load every session; path-scoped rules load when Claude works with matching files.
+
+```markdown
+---
+paths:
+  - "src/api/**/*.ts"
+---
+
+# API Rules
+
+- Validate every request body.
+- Use the standard error response shape.
+```
+
+Use `/memory` to inspect loaded `CLAUDE.md`, `CLAUDE.local.md`, rules files, and auto memory. Auto memory is enabled by default and stores useful learnings per repository under `~/.claude/projects/<project>/memory/`.
+
+```bash
+# Inspect loaded instructions and auto memory
+/memory
+```
+
+Add this to `.claude/settings.json` to disable auto memory for this project:
+
+```json
+{
+  "autoMemoryEnabled": false
+}
+```
+
+Settings apply by scope. Higher-priority scopes override lower-priority scopes for scalar values, while some settings such as permissions merge across scopes.
+
+| Priority | Scope | Typical location |
+|----------|-------|------------------|
+| 1 | Managed | System policy or server-managed settings |
+| 2 | Command line | Flags for the current invocation |
+| 3 | Local | `.claude/settings.local.json` |
+| 4 | Project | `.claude/settings.json` |
+| 5 | User | `~/.claude/settings.json` |
+
+When configuration does not behave as expected, check what Claude Code actually loaded:
+
+```bash
+/context      # Show what is occupying the context window
+/memory       # Show loaded instructions, rules, and auto memory
+/status       # Show active settings sources
+/doctor       # Validate configuration and installation health
+```
+
 ### Output Formatting
 
 ```bash
@@ -742,6 +816,7 @@ claude --compliance-mode "analyze for security compliance"
 | `/compact [instructions]` | Summarize the current conversation to free context |
 | `/context [all]` | Show current context usage |
 | `/config` | Open settings panel |
+| `/memory` | View loaded memory files, rules, and auto memory |
 | `/permissions` | View and manage permission rules |
 | `/status` | Show version, model, account, and connectivity |
 | `/doctor` | Check installation health |
@@ -797,6 +872,8 @@ claude --compliance-mode "analyze for security compliance"
 ### Workflow Tips
 
 - Create custom slash commands in `.claude/commands/`
+- Keep shared project guidance in `CLAUDE.md` or `.claude/rules/`
+- Put private machine-specific overrides in `.claude/settings.local.json`
 - Use `--output-format json` for automation
 - Pipe commands for complex workflows
 - Use session IDs for long-running tasks
@@ -935,6 +1012,10 @@ For more Claude Code resources, visit the official Anthropic documentation at
 - [Claude Code Commands Reference](https://code.claude.com/docs/en/commands)
 - [Claude Code Interactive Mode](https://code.claude.com/docs/en/interactive-mode)
 - [Claude Code Session Management](https://code.claude.com/docs/en/sessions)
+- [Claude Code .claude Directory Reference](https://code.claude.com/docs/en/claude-directory)
+- [Claude Code Memory](https://code.claude.com/docs/en/memory)
+- [Claude Code Settings](https://code.claude.com/docs/en/settings)
+- [Claude Code Configuration Debugging](https://code.claude.com/docs/en/debug-your-config)
 - [Claude Code GitHub Repository](https://github.com/anthropics/claude-code)
 - [Anthropic API Documentation](https://docs.anthropic.com)
 - [MCP Documentation](https://code.claude.com/docs/en/mcp)
